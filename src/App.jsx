@@ -6,6 +6,8 @@ export default function App() {
 
   const [isStarted, setIsStarted] = React.useState(false)
   const [array, setArray] = React.useState([])
+  const [isGoingToCheck, setIsGoingToCheck] = React.useState(false)
+  const [needRestart, setNeedRestart] = React.useState(false)
 
   function htmlDecode(input) {
     var doc = new DOMParser().parseFromString(input, "text/html");
@@ -20,41 +22,41 @@ export default function App() {
           category: item.category,
           question: htmlDecode(item.question),
           correctAnswer: htmlDecode(item.correct_answer),
-          answers: [{value: htmlDecode(item.correct_answer), id: nanoid(), isHeld: false}, {value: htmlDecode(item.incorrect_answers[0]), id: nanoid(), isHeld: false}, {value: htmlDecode(item.incorrect_answers[1]), id: nanoid(), isHeld: false}, {value: htmlDecode(item.incorrect_answers[2]), id: nanoid(), isHeld: false}],
+          answers: [{value: htmlDecode(item.correct_answer), id: nanoid(), isHeld: false, isCorrect: true},
+            {value: htmlDecode(item.incorrect_answers[0]), id: nanoid(), isHeld: false, isCorrect: false},
+            {value: htmlDecode(item.incorrect_answers[1]), id: nanoid(), isHeld: false, isCorrect: false},
+            {value: htmlDecode(item.incorrect_answers[2]), id: nanoid(), isHeld: false, isCorrect: false}],
           difficulty: item.difficulty,
           id: nanoid(),
           isHeld: false
         }))
         for (let item of notShuffled) {
           item.answers = item.answers.sort((a, b) => 0.5 - Math.random())
-          console.log(item.answers)
         }
         const shuffled = notShuffled
         return shuffled
       }
       ))
-  }, [])
-
-  React.useEffect(() => {
-
-  }, [array])
-
+  }, [needRestart])
 
   function checkAnswers() {
     let count = 0
     array.map(item => {
-      if(item.correctAnswer === item.answers.filter(answer => answer.isHeld)[0].value) {
-
-        count++
+      if(item.answers.filter(answer => answer.isHeld).length > 0){
+        if(item.correctAnswer === item.answers.filter(answer => answer.isHeld)[0].value) {
+          count++
+        }
       }
-      console.log(item.correctAnswer)
+
     })
-    console.log(count)
+    return count
   }
 
-  function start() {
-
-    setIsStarted(true)
+  function newGame() {
+    setArray([])
+    setIsGoingToCheck(false)
+    setNeedRestart(true)
+    setIsStarted(false)
   }
 
   function clicked(questionId, answerId) {
@@ -82,10 +84,7 @@ export default function App() {
                   ...answer,
                   isHeld: !answer.isHeld
                 })
-              } else if(checkedItem.id !== answerId){
-                  return answer
-                }
-                else {
+              } else {
                   return answer
                 }
             })
@@ -99,16 +98,7 @@ export default function App() {
     }))
   }
 
-  /*function shuffleArray(arr) {
-    console.log(array[0].answers)
-    console.log(arr)
-    arr.sort(() => Math.random() - 0.5);
-    console.log(arr)
-  }*/
-
-  function quizElements() {
-    console.log(array[0].answers)
-    return array.map(item => {
+  const quizElements = array.map(item => {
       return (<Question
       key= {nanoid()}
       id= {item.id}
@@ -118,44 +108,37 @@ export default function App() {
       difficulty= {item.difficulty}
       clicked={clicked}
       isHeld={item.isHeld}
-      isCo
+      isGoingToCheck={isGoingToCheck}
       />)
     })
-  }
-
+console.log(array)
   return (
     <main>
       <div className="blob blob-top"></div>
       {!isStarted && <div className="container">
         <h1 className="title">Quizzical</h1>
         <p className="description">Some description if needed</p>
-        <button className="start-quiz" onClick={start}>Start quiz</button>
+        <button className="start-quiz" onClick={() => setIsStarted(true)}>Start quiz</button>
       </div>}
-      {isStarted && (array.length > 0) && <div className="center">{quizElements()}<button onClick={checkAnswers} className="start-quiz">Check Answers</button></div>}
+      {isStarted && (array.length > 0) && <h1 className="main-title">QUIZZICAL</h1>}
+      {isStarted && (array.length > 0) &&
+        <div className="center">
+          {quizElements}
+          <div className="end-state">
+            {
+            isGoingToCheck &&
+            <h2 className="score">
+              You scored {checkAnswers()}/5 correct answers
+            </h2>
+            }
+            <button
+              onClick={isGoingToCheck ? () => newGame() : () => setIsGoingToCheck(true)}
+              className="start-quiz"
+            >{isGoingToCheck ? "Play again" : "Check Answers"}
+            </button>
+          </div>
+        </div>}
       <div className="blob blob-bottom"></div>
     </main>
   )
 }
-
-
-
-/*
-import React from "react"
-
-export default function Question(props) {
-
-console.log(props.answers)
-
-  return (
-      <div className="solo">
-        <h3 className="question">{props.question}</h3>
-        <div className="answers">
-          <button className="answer" style={{background: props.answers[0].isHeld ? "#D6DBF5" : "white"}} onClick={() => props.clicked(props.id,props.answers[0].id)}>{props.answers[0].value}</button>
-          <button className="answer" style={{background: props.answers[1].isHeld ? "#D6DBF5" : "white"}} onClick={() => props.clicked(props.id,props.answers[1].id)}>{props.answers[1].value}</button>
-          <button className="answer" style={{background: props.answers[2].isHeld ? "#D6DBF5" : "white"}} onClick={() => props.clicked(props.id,props.answers[2].id)}>{props.answers[2].value}</button>
-          <button className="answer" style={{background: props.answers[3].isHeld ? "#D6DBF5" : "white"}} onClick={() => props.clicked(props.id,props.answers[3].id)}>{props.answers[3].value}</button>
-        </div>
-      </div>
-  )
-}
-*/
