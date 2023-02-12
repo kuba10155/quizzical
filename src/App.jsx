@@ -111,7 +111,7 @@ export default function App() {
       isGoingToCheck={isGoingToCheck}
       />)
     })
-console.log(array)
+
   return (
     <main>
       <div className="blob blob-top"></div>
